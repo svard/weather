@@ -2,9 +2,13 @@
 /lib
 /classes
 /checkouts
+/resources/public/css
+/resources/public/js
+/resources/public/bower_components
 pom.xml
 pom.xml.asc
 *.jar
 *.class
 /.lein-*
 /.nrepl-port
+/.sass-cache

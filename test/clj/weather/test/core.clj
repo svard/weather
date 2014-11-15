@@ -1,6 +1,6 @@
-(ns weather.test.handler
+(ns weather.test.core
   (:require [clojure.test :refer :all]
-            [weather.handler :refer :all]
+            [weather.core :refer :all]
             [ring.mock.request :as mock]))
 
 (deftest test-app

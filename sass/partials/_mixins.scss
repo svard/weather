@@ -1,0 +1,7 @@
+@mixin interactive {
+  cursor: pointer;
+
+  &:active {
+    color: grey;
+  }
+}
