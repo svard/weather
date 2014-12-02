@@ -22,6 +22,12 @@
 (def days-in-month [31 28 31 30 31 30 31 31 30 31 30 31])
 (def default-formatter (f/formatters :date-time-no-ms))
 (def date-formatter (f/formatter "yyyy-MM-dd"))
+(def partition-by-date (partition-by #(first (string/split (:dateStr %) #"\s"))))
+(def avg-temp-per-day
+  (map (fn [xs]
+         (let [date (first (string/split (:dateStr (first xs)) #"\s"))]
+           {:avg (avg-temp xs)
+            :date date}))))
 
 (defn- avg-temp [xs]
   {:pre [(seq xs)]}
@@ -128,42 +134,40 @@
                  {:entity entity})))
   :handle-ok :entity)
 
-(defn- partition-by-date
-  [xs]
-  (partition-by #(first (string/split (:dateStr %) #"\s")) xs))
+;; (defn- partition-by-date [xs]
+;;   (partition-by #(first (string/split (:dateStr %) #"\s")) xs))
 
-(defn- partition-by-year
-  [db year]
-  (let [selection (get-temp-resource db {:year (str year)})]
-    (partition-by-date selection)))
+;; (defn- partition-by-year [db year]
+;;   (let [selection (get-temp-resource db {:year (str year)})]
+;;     (partition-by-date selection)))
 
-(defn- avg-temp-per-day
-  [db year]
-  (map (fn [xs]
-         (let [date (first (string/split (:dateStr (first xs)) #"\s"))]
-           {:avg (avg-temp xs)
-            :date date}))
-       (partition-by-year db year)))
+;; (defn- avg-temp-per-day [db year]
+;;   (map (fn [xs]
+;;          (let [date (first (string/split (:dateStr (first xs)) #"\s"))]
+;;            {:avg (avg-temp xs)
+;;             :date date}))
+;;        (partition-by-year db year)))
 
-(defn- filter-dates-before
-  [year month day date]
+(defn avg-temp-sequence [db year]
+  (sequence (comp partition-by-date-trans avg-temp-per-day-trans)
+            (get-temp-resource db {:year (str year)})))
+
+(defn- filter-dates-before [year month day date]
   (let [limit (t/date-time year month day)
         current (f/parse date-formatter (:date date))]
     (t/before? limit current)))
 
-(defn- valid-spring-dates
-  [year]
+(defn- valid-spring-dates [year]
   (partial filter-dates-before year 2 14))
 
-(defn- valid-autumn-dates
-  [year]
+(defn- valid-autumn-dates [year]
   (partial filter-dates-before year 8 1))
 
-(defn- get-season-dates
-  [db year]
+(defn- get-season-dates [db year]
   (let [spring-candidates (valid-spring-dates year)
         autumn-candidates (valid-autumn-dates year)
-        temps (avg-temp-per-day db year)
+;        temps (avg-temp-per-day db year)
+        temps (avg-temp-sequence db year)
         spring-pred (fn [xs]
                       (filter #(<= 0 (:avg %)) xs))
         summer-pred (fn [xs]
