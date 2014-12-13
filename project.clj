@@ -1,4 +1,4 @@
-(defproject weather "1.0.0"
+(defproject weather "1.1.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
@@ -16,7 +16,8 @@
                  [compojure "1.2.0"]
                  [liberator "0.12.0"]
                  [http-kit "2.1.19"]
-                 [om "0.8.0-alpha2"]
+                 [om "0.8.0-beta3"]
+                 [prismatic/om-tools "0.3.6"]
                  [com.novemberain/monger "2.0.0"]
                  [com.novemberain/langohr "3.0.0-rc3"]
                  [com.taoensso/timbre "3.3.1" :exclusions [com.taoensso/encore]]
@@ -28,7 +29,7 @@
   
   :plugins [[lein-ring "0.8.12"]
             [lein-cljsbuild "1.0.3"]
-            [cider/cider-nrepl "0.7.0"]]
+            [cider/cider-nrepl "0.8.1"]]
 
   :main ^:skip-aot weather.core
 
@@ -49,7 +50,7 @@
                                    :preamble ["react/react.min.js"]
                                    :externs ["react/externs/react.js"
                                              "resources/public/bower_components/d3/d3.js"
-                                             "resources/public/bower_components/nvd3/nv.d3.js"]
+                                             "resources/public/bower_components/dimple/dist/dimple.v2.1.0.js"]
                                    :pretty-print false
                                    :closure-warnings {:externs-validation :off
                                                       :non-standard-jsdoc :off}}}]})

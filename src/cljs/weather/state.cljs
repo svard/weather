@@ -13,6 +13,7 @@
    :month-temp {:current nil
                 :previous nil
                 :line []}
+   :temp-chart []
    :precipitation {:humidity nil}
    :seasons []})
 
@@ -29,6 +30,9 @@
 
 (defn seasons []
   (om/ref-cursor (:seasons (om/root-cursor app))))
+
+(defn temp-chart []
+  (om/ref-cursor (:temp-chart (om/root-cursor app))))
 
 (go-loop []
   (let [[type year month] (<! ch/month-temp-chan)]
@@ -61,9 +65,10 @@
     (xhr/edn-xhr {:method :get
                   :url (str "temperature/line?year=" year "&month=" month)
                   :on-success (fn [data]
-                                (swap! app update-in [:month-temp :line] (fn [_] data)))
+                                (swap! app update-in [:temp-chart] (fn [_]
+                                                                     (vec data))))
                   :on-error (fn [_]
-                              (swap! app update-in [:month-temp :line] (fn [_] [])))})
+                              (swap! app update-in [:temp-chart] (fn [_] [])))})
     (recur)))
 
 (go-loop []

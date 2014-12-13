@@ -1,28 +1,38 @@
 .w-sub-info {
-  margin-top: 8px;
-  font-size: 0.9em;
+    margin-top: 8px;
+    font-size: 0.9em;
 
-  span {
-    margin: 0 3px 0 3px;
-  }
+    span {
+        margin: 0 3px 0 3px;
+    }
 }
 
 .w-spinner {
-  position: absolute;
-  top: calc(50% - 20px);
-  left: calc(50% - 15px);
+    position: absolute;
+    top: calc(50% - 20px);
+    left: calc(50% - 15px);
 }
 
 .w-prev {
-  margin-right: 5px;
-  @include interactive;
+    margin-right: 5px;
+    @include interactive;
 }
 
 .w-next {
-  margin-left: 5px;
-  @include interactive;
+    margin-left: 5px;
+    @include interactive;
 }
 
 .w-holder {
-  position: relative;
+    position: relative;
+}
+
+.w-select-box {
+    text-align: left;
+
+    .w-select-box-caret {
+        position: absolute;
+        right: 15px;
+        top: 25%;
+    }
 }

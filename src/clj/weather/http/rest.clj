@@ -3,7 +3,7 @@
             [clojure.string :as string]
             [monger.collection :as coll :exclude [update]]
             [monger.query :as query]
-;            [monger.core :as mg]
+            [monger.core :as mg]
             [monger.joda-time]
             [clj-time.format :as f]
             [clj-time.core :as t]
@@ -16,8 +16,9 @@
 
 (timbre/refer-timbre)
 
-;; (def conn (mg/connect {:host "192.168.0.108" :port 27017}))
-;; (def db (mg/get-db conn "services_db"))
+(def conn (mg/connect {:host "192.168.0.108" :port 27017}))
+(def db (mg/get-db conn "services_db"))
+(declare avg-temp)
 (def xf (map #(:temperature %1)))
 (def days-in-month [31 28 31 30 31 30 31 31 30 31 30 31])
 (def default-formatter (f/formatters :date-time-no-ms))
@@ -124,7 +125,7 @@
   (let [year (read-string (:year params))
         month (read-string (:month params))]
     (->> (prepare-temp-response db year month)
-         (map #(assoc {} :x (* 1000 (:date %1)) :y (:temperature %1))))))
+         (map #(assoc {} :date (* 1000 (:date %1)) :temp (:temperature %1))))))
 
 (defresource month-line [db {:keys [params] :as req}]
   :available-media-types ["application/edn"]
@@ -149,7 +150,7 @@
 ;;        (partition-by-year db year)))
 
 (defn avg-temp-sequence [db year]
-  (sequence (comp partition-by-date-trans avg-temp-per-day-trans)
+  (sequence (comp partition-by-date avg-temp-per-day)
             (get-temp-resource db {:year (str year)})))
 
 (defn- filter-dates-before [year month day date]

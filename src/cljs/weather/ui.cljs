@@ -3,12 +3,14 @@
   (:require [om.core :as om :include-macros true]
             [sablono.core :as html :refer-macros [html]]
             [clojure.string :as string]
-            [cljs.core.async :refer [put! tap chan]]
+            [cljs.core.async :refer [put! tap chan pub sub <!]]
             [weather.state :as state]
             [weather.date :as date]
             [weather.xhr :as xhr]
             [weather.channels :as ch]
-            [weather.charts :as chart]))
+            [weather.charts :as chart]
+            [weather.widgets.select-box :refer [select-box]]
+            ))
 
 (defn on-prev-click [owner year month]
   (let [new-month (date/prev-month month)
@@ -180,30 +182,39 @@
              (om/build precipitation-panel app)
              (om/build humidity-panel app)]))))
 
-(defn simple-line-view [app owner]
+(defn chart-view [_ owner]
   (reify
     om/IInitState
     (init-state [_]
       {:year (.getFullYear (js/Date.))
-       :month (inc (.getMonth (js/Date.)))})
+       :month (inc (.getMonth (js/Date.)))
+       :month-select-chan (chan)})
     om/IWillMount
     (will-mount [_]
       (let [year (om/get-state owner :year)
-            month (om/get-state owner :month)]
-        (put! ch/month-line-chan [year month])))
-    om/IDidMount
-    (did-mount [_]
-      (let [data (om/observe owner (state/month-temps))]
-        (chart/nvd3-simple-line (:line data))))
+            month (om/get-state owner :month)
+            select-chan (om/get-state owner :month-select-chan)]
+        (put! ch/month-line-chan [year month])
+        (go-loop []
+          (let [[_ month] (<! select-chan)]
+            (put! ch/month-line-chan [year (:value month)]))
+          (recur))))
     om/IDidUpdate
     (did-update [_ _ _]
-      (let [data (om/observe owner (state/month-temps))]
-        (chart/nvd3-simple-line (:line data))))
-    om/IRender
-    (render [_]
-      (html [:div.uk-grid
-             [:div#nv-line.uk-width-1-1.uk-margin-bottom {:reactKey "nv-line"}
-              [:svg {:style #js {:height "500px"}}]]]))))
+      (let [data (om/observe owner (state/temp-chart))
+            el (.getElementById js/document "line-chart")]
+        (while (.hasChildNodes el)
+          (.removeChild el (.-lastChild el)))
+        (when (seq data)
+          (chart/dimple-line "line-chart" data))))
+    om/IRenderState
+    (render-state [_ {:keys [year month month-select-chan]}]
+      (let [months (map-indexed (fn [idx itm]
+                                  {:title itm :value (inc idx)}) date/month-name)]
+        (html [:div.uk-grid
+               [:div.uk-align-right (om/build select-box months {:opts {:default (date/get-month-name month)
+                                                                        :chan month-select-chan}})]
+               [:div#line-chart.uk-width-1-1.uk-margin-bottom {:reactKey "line-chart"}]])))))
 
 (defn seasons-view [app owner]
   (reify

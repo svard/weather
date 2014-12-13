@@ -11,4 +11,5 @@
 (om/root ui/temperature-view state/app {:target (. js/document (getElementById "temperature"))})
 (om/root ui/precipitation-view state/app {:target (. js/document (getElementById "precipitation"))})
 (om/root ui/seasons-view state/app {:target (. js/document (getElementById "seasons"))})
-(om/root ui/simple-line-view state/app {:target (. js/document (getElementById "chart"))})
+(om/root ui/chart-view state/app {:target (. js/document (getElementById "chart"))})
+
