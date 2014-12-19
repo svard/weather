@@ -8,8 +8,8 @@
 
 (reset! state/app (state/initial-state))
 
-(om/root ui/temperature-view state/app {:target (. js/document (getElementById "temperature"))})
-(om/root ui/precipitation-view state/app {:target (. js/document (getElementById "precipitation"))})
-(om/root ui/seasons-view state/app {:target (. js/document (getElementById "seasons"))})
-(om/root ui/chart-view state/app {:target (. js/document (getElementById "chart"))})
+(om/root ui/temperature-root state/app {:target (. js/document (getElementById "temperature"))})
+(om/root ui/precipitation-root state/app {:target (. js/document (getElementById "precipitation"))})
+(om/root ui/seasons-root state/app {:target (. js/document (getElementById "seasons"))})
+(om/root ui/chart-root state/app {:target (. js/document (getElementById "chart"))})
 

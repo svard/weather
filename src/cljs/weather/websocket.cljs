@@ -4,8 +4,9 @@
   (:require [om.core :as om :include-macros true]
             [cljs.core.match]
             [taoensso.sente :as sente]
-            [cljs.core.async :refer [<!]]
-            [weather.state :as state]))
+            [cljs.core.async :refer [put! <!]]
+            [weather.state :as state]
+            [weather.channels :as ch]))
 
 (enable-console-print!)
 
@@ -33,4 +34,5 @@
                   [:live-temp/indoor data] (swap! state/app update-in [:indoor] (fn [_] data))
                   [:live-temp/outdoor data] (swap! state/app update-in [:outdoor] (fn [_] data))))))
 
-(defonce event-router (sente/start-chsk-router! ch-chsk event-handler))
+(defonce event-router
+  (sente/start-chsk-router! ch-chsk event-handler))

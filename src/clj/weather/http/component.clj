@@ -36,6 +36,7 @@
       (GET "/temperature/line" [] (make-resource rest/month-line (:db db)))
       (GET "/seasons" [] (make-resource rest/seasons (:db db)))
       (GET "/precipitation" [] (partial rest/precipitation (:db db)))
+      (GET "/precipitation/humidity" [] (partial rest/humidity (:db db)))
       (GET "/chsk" req ((:ajax-get-or-ws-handshake-fn websocket) req))
       (POST "/chsk" req ((:ajax-post-fn websocket) req))
       (route/resources "/")

@@ -1,4 +1,4 @@
-(defproject weather "1.1.1"
+(defproject weather "1.2.0"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
