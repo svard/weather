@@ -51,14 +51,29 @@
   (let [sum (r/fold + (r/map key coll))]
     (math/round (/ sum (count coll)))))
 
+(defn dedupe-by [pred]
+  (fn [xf]
+    (let [prev (volatile! ::none)]
+      (fn
+        ([] (xf))
+        ([result] (xf result))
+        ([result input]
+          (let [prior @prev]
+            (vreset! prev (pred input))
+            (if (= prior (pred input))
+              result
+              (xf result input))))))))
+
 (defn average-temperature-by-day [coll]
   (let [avg-by-day (comp partition-by-date average-temperature)]
     (into [] avg-by-day coll)))
 
 (defn temperature-by-hour [coll]
-  (map (fn [item]
-         {:temp (:temperature item)
-          :date (* (:date item) 1000)}) coll))
+  (let [temp-map (map (fn [item]
+                        {:temp (:temperature item)
+                         :date (* (:date item) 1000)}))
+        xf (comp temp-map (dedupe-by :date))]
+    (into [] xf coll)))
 
 (defn- filter-dates-before [year month day date]
   (let [limit (t/date-time year month day)
@@ -112,4 +127,3 @@
                       (filter #(= 5 (count %)))
                       (first)
                       (first)))}))
-

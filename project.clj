@@ -1,4 +1,4 @@
-(defproject weather "1.2.0"
+(defproject weather "1.2.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
@@ -29,7 +29,7 @@
   
   :plugins [[lein-ring "0.8.12"]
             [lein-cljsbuild "1.0.3"]
-            [cider/cider-nrepl "0.8.1"]]
+            [cider/cider-nrepl "0.8.2"]]
 
   :main ^:skip-aot weather.core
 
