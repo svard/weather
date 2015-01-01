@@ -27,6 +27,14 @@
     position: relative;
 }
 
+.w-date-filter {
+    div {
+        &:not(:last-child) { 
+            margin-right: 8px;
+        }
+    }
+}
+
 .w-select-box {
     text-align: left;
 

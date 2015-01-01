@@ -8,7 +8,9 @@
   {:indoor {}
    :outdoor {}
    :month-temp {}
-   :temp-chart []
+   :temp-chart {:hourly []
+                :daily []
+                :precipitation []}
    :precipitation {}
    :humidity {}
    :seasons []})

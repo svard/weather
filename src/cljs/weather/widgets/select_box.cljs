@@ -30,7 +30,7 @@
                :items items})
   (render-state [_ {:keys [active? selected]}]
                 (html [:div.uk-button-dropdown
-                       [:button.w-select-box.uk-button {:style #js {:min-width "150px"}
+                       [:button.w-select-box.uk-button {:style #js {:minWidth "150px"}
                                                         :on-click #(toggle-active owner active?)}
                         (str selected " ")
                         [:i.w-select-box-caret.uk-icon-caret-down]]

@@ -192,48 +192,125 @@
   (init-state [_]
               {:year (.getFullYear (js/Date.))
                :month (inc (.getMonth (js/Date.)))
-               :month-select-chan (chan)})
+               :month-select-chan (chan)
+               :year-select-chan (chan)})
 
   (will-mount [_]
               (let [xs (state/temp-chart)
                     year (om/get-state owner :year)
                     month (om/get-state owner :month)
-                    select-chan (om/get-state owner :month-select-chan)
-                    success (fn [data]
-                              (om/update! xs data)
-                              (om/set-state! owner :loading false))
+                    month-select-chan (om/get-state owner :month-select-chan)
+                    year-select-chan (om/get-state owner :year-select-chan)
+                    hourly-success (fn [data]
+                                     (om/update! xs [:hourly] data)
+                                     (om/set-state! owner :loading false))
+                    daily-success (fn [data]
+                                    (om/update! xs [:daily] data)
+                                    (om/set-state! owner :loading false))
+                    prec-success (fn [data]
+                                   (om/update! xs [:precipitation] data)
+                                   (om/set-state! owner :loading false))
                     error (fn [_]
                             (om/set-state! owner :loading false))]
-                (state/load-data (str "temperature/line?year=" year "&month=" month)
-                                 success
+                (state/load-data (str "temperature/line/hourly?year=" year "&month=" month)
+                                 hourly-success
+                                 error)
+                (state/load-data (str "temperature/line/daily?year=" year)
+                                 daily-success
+                                 error)
+                (state/load-data (str "precipitation/bar?year=" year)
+                                 prec-success
                                  error)
                 (go-loop []
-                  (let [[_ month] (<! select-chan)]
-                    (state/load-data (str "temperature/line?year=" year "&month=" (:value month))
-                                     success
-                                     error))
+                  (let [[_ month] (<! month-select-chan)]
+                    (state/load-data (str "temperature/line/hourly?year=" (om/get-state owner :year) "&month=" (:value month))
+                                     hourly-success
+                                     error)
+                    (om/set-state! owner :month (:value month)))
+                  (recur))
+                
+                (go-loop []
+                  (let [[_ year] (<! year-select-chan)]
+                    (state/load-data (str "temperature/line/daily?year=" (:title year))
+                                     daily-success
+                                     error)
+                    (state/load-data (str "temperature/line/hourly?year=" (:title year) "&month=" (om/get-state owner :month))
+                                     hourly-success
+                                     error)
+                    (state/load-data (str "precipitation/bar?year=" (:title year))
+                                     prec-success
+                                     error)
+                    (om/set-state! owner :year (:title year)))
                   (recur))))
 
   (did-mount [_]
              (let [data (om/observe owner (state/temp-chart))]
                (when (seq data)
-                 (chart/dimple-line "line-chart" data))))
+                 (chart/dimple-line "hourly-chart"
+                                    (:hourly data)
+                                    {:color "#66CD00"
+                                     :period js/d3.time.day
+                                     :interval 3
+                                     :date-format "%Y-%m-%d %H:%M"})
+                 (chart/dimple-line "daily-chart"
+                                    (:daily data)
+                                    {:color "#426F42"
+                                     :period js/d3.time.month
+                                     :interval 1
+                                     :date-format "%Y-%m-%d"})
+                 (chart/dimple-bar "bar-chart"
+                                    (:precipitation data)
+                                    {:color "#007FFF"
+                                     :period js/d3.time.month
+                                     :interval 1
+                                     :date-format "%b-%y"}))))
 
   (did-update [_ _ _]
               (let [data (om/observe owner (state/temp-chart))
-                    el (.getElementById js/document "line-chart")]
-                (while (.hasChildNodes el)
-                  (.removeChild el (.-lastChild el)))
+                    hourly-chart (.getElementById js/document "hourly-chart")
+                    daily-chart (.getElementById js/document "daily-chart")
+                    bar-chart (.getElementById js/document "bar-chart")]
+                (while (.hasChildNodes hourly-chart)
+                  (.removeChild hourly-chart (.-lastChild hourly-chart)))
+                (while (.hasChildNodes daily-chart)
+                  (.removeChild daily-chart (.-lastChild daily-chart)))
+                (while (.hasChildNodes bar-chart)
+                  (.removeChild bar-chart (.-lastChild bar-chart)))
                 (when (seq data)
-                  (chart/dimple-line "line-chart" data))))
+                  (chart/dimple-line "hourly-chart"
+                                     (:hourly data)
+                                     {:color "#66CD00"
+                                      :period js/d3.time.day
+                                      :interval 3
+                                      :date-format "%Y-%m-%d %H:%M"})
+                  (chart/dimple-line "daily-chart"
+                                     (:daily data)
+                                     {:color "#426F42"
+                                      :period js/d3.time.month
+                                      :interval 1
+                                      :date-format "%Y-%m-%d"})
+                  (chart/dimple-bar "bar-chart"
+                                    (:precipitation data)
+                                    {:color "#007FFF"
+                                     :period js/d3.time.month
+                                     :interval 1
+                                     :date-format "%b-%y"}))))
 
-  (render-state [_ {:keys [year month month-select-chan]}]
-                (let [months (map-indexed (fn [idx itm]
-                                            {:title itm :value (inc idx)}) date/month-name)]
+  (render-state [_ {:keys [year month month-select-chan year-select-chan]}]
+                (let [default-year (.getFullYear (js/Date.))
+                      months (map-indexed (fn [idx itm]
+                                            {:title itm :value (inc idx)}) date/month-name)
+                      years (for [x (range 2012 (inc default-year))]
+                              {:title (str x) :value x})]
                   (html [:div.uk-grid
-                         [:div.uk-align-right (om/build select-box months {:opts {:default (date/get-month-name month)
-                                                                                  :chan month-select-chan}})]
-                         [:div#line-chart.uk-width-1-1.uk-margin-bottom {:reactKey "line-chart"}]]))))
+                         [:div.uk-align-right.w-date-filter
+                          (om/build select-box years {:opts {:default default-year
+                                                             :chan year-select-chan}})
+                          (om/build select-box months {:opts {:default (date/get-month-name month)
+                                                              :chan month-select-chan}})]
+                         [:div#hourly-chart.uk-width-1-1.uk-margin-bottom]
+                         [:div#daily-chart.uk-width-1-1.uk-margin-bottom]
+                         [:div#bar-chart.uk-width-1-1.uk-margin-bottom]]))))
 
 (defcomponent seasons-view [_ owner]
   (init-state [_]

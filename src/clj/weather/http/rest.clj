@@ -1,6 +1,6 @@
 (ns weather.http.rest
   (:require [liberator.core :refer [defresource]]
-            ;[monger.core :as mg]
+            [monger.core :as mg]
             [clj-time.core :as t]
             [clj-time.local :as l]
             [taoensso.timbre :as timbre]
@@ -12,8 +12,8 @@
 
 (timbre/refer-timbre)
 
-;; (def conn (mg/connect {:host "192.168.0.108" :port 27017}))
-;; (def db (mg/get-db conn "services_db"))
+(def conn (mg/connect {:host "192.168.0.108" :port 27017}))
+(def db (mg/get-db conn "services_db"))
 
 (defn- date-range [query-params]
   (let [year (read-string (:year query-params))
@@ -78,7 +78,7 @@
   :handle-ok (fn [ctx]
                (into [] (:entity ctx))))
 
-(defresource month-line [db {:keys [params] :as req}]
+(defresource line-data [db {:keys [params] :as req}]
   :available-media-types ["application/edn"]
   :exists? (fn [_]
              (let [query-fn (d/make-temp-query db)
@@ -86,5 +86,38 @@
                (when (seq entity)
                  {:entity entity})))
   :handle-ok (fn [ctx]
-               (into [] (h/temperature-by-hour (:entity ctx)))))
+               (case (:type params)
+                 "hourly" (h/temperature-by-hour (:entity ctx))
+                 "daily" (h/average-temperature-by-day (:entity ctx))
+                 :else [])))
+
+(defresource bar-data [db {:keys [params] :as req}]
+  :available-media-types ["application/edn"]
+  :exists? (fn [_]
+             (let [year (read-string (:year params))
+                   entity (d/aggregated-precipitation db year)]
+               (when (seq entity)
+                 {:entity entity})))
+  :handle-ok (fn [ctx]
+               (let [year (read-string (:year params))]
+                 (into [] (map (fn [itm]
+                                 (let [[ts _] (date/get-month-start-end-timestamp year (:_id itm))]
+                                   {:date (* ts 1000)
+                                    :precipitation (math/round (:sum itm))}))
+                               (:entity ctx))))))
+
+;; (defresource chart-data [db {:keys [params] :as req}]
+;;   :available-media-types ["application/edn"]
+;;   :exists? (fn [_]
+;;              (let [year (read-string (:year params))
+;;                    entity (d/aggregated-precipitation db year)]
+;;                (when (seq entity)
+;;                  {:entity entity})))
+;;   :handle-ok (fn [ctx]
+;;                (let [year (read-string (:year params))]
+;;                  (into [] (map (fn [itm]
+;;                                  (let [[ts _] (date/get-month-start-end-timestamp year (:_id itm))]
+;;                                    {:date (* ts 1000)
+;;                                     :precipitation (math/round (:sum itm))}))
+;;                                (:entity ctx))))))
 

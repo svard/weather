@@ -1,4 +1,4 @@
-(defproject weather "1.2.1"
+(defproject weather "1.3.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
@@ -8,7 +8,7 @@
   :test-paths ["test/clj" "test/cljs"]
   
   :dependencies [[org.clojure/clojure "1.7.0-alpha4"]
-                 [org.clojure/clojurescript "0.0-2371" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-2505"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/data.json "0.2.5"]
                  [org.clojure/core.match "0.2.1"]
@@ -16,7 +16,7 @@
                  [compojure "1.2.0"]
                  [liberator "0.12.0"]
                  [http-kit "2.1.19"]
-                 [om "0.8.0-beta3"]
+                 [om "0.8.0-rc1"]
                  [prismatic/om-tools "0.3.6"]
                  [com.novemberain/monger "2.0.0"]
                  [com.novemberain/langohr "3.0.0-rc3"]
@@ -48,9 +48,9 @@
                         :compiler {:output-to "resources/public/js/weather.js"
                                    :optimizations :advanced
                                    :preamble ["react/react.min.js"]
-                                   :externs ["react/externs/react.js"
-                                             "resources/public/bower_components/d3/d3.js"
+                                   :externs ["resources/public/bower_components/d3/d3.js"
                                              "resources/public/bower_components/dimple/dist/dimple.v2.1.0.js"]
+
                                    :pretty-print false
                                    :closure-warnings {:externs-validation :off
                                                       :non-standard-jsdoc :off}}}]})
