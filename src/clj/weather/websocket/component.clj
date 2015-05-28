@@ -2,35 +2,31 @@
   (:require [com.stuartsierra.component :as component]
             [taoensso.timbre :as timbre]
             [taoensso.sente :as sente]
-            [weather.websocket.websocket :as ws]
-            [weather.websocket.redis :as redis]))
+            [weather.websocket.websocket :as ws]))
 
 (timbre/refer-timbre)
 
-(defrecord RedisStore [conf]
+(defrecord KeyStore [conf]
   component/Lifecycle
   (start [component]
-    (info "Starting redis store")
-    (assoc component :redis (redis/make-transient {:pool {}
-                                                   :spec {:host (:redis-host conf)
-                                                          :port 6379}}
-                                                  :expire 129600)))
+    (info "Starting key store")
+    (assoc component :store (:key-store conf)))
 
   (stop [component]
-    (info "Stopping redis store")
-    (assoc component :redis nil)))
+    (info "Stopping key store")
+    (assoc component :store nil)))
 
-(defn new-redis-store [conf]
-  (map->RedisStore {:conf conf}))
+(defn new-key-store [conf]
+  (map->KeyStore {:conf conf}))
 
-(defrecord Websocket [channels redis]
+(defrecord Websocket [channels store]
   component/Lifecycle
   (start [component]
     (info "Starting websocket listener")    
     (let [{:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn connected-uids]}
           (sente/make-channel-socket! {:user-id-fn ws/user-id})
-          chsk-router (ws/make-event-handler (:redis redis))]
-      (ws/start-loop (:mb-comm channels) (:redis redis) (ws/live-stats send-fn connected-uids))
+          chsk-router (ws/make-event-handler (:store store))]
+      (ws/start-loop (:mb-comm channels) (:store store) (ws/live-stats send-fn connected-uids))
       (sente/start-chsk-router! ch-recv chsk-router)
       (assoc component
         :ajax-post-fn ajax-post-fn

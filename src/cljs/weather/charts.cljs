@@ -33,11 +33,19 @@
           x (.addCategoryAxis bar "x" "date")
           y (.addMeasureAxis bar "y" "precipitation")
           s (.addSeries bar nil js/dimple.plot.bar)
-          Color (.-color js/dimple)]
+          Color (.-color js/dimple)
+          format (.. js/d3 -time (format date-format))]
       (aset x "title" nil)
       (aset x "timePeriod" period)
       (aset x "timeInterval" interval)
       (aset y "title" "Precipitation mm")
       (aset y "tickFormat" "g")
       (aset bar "defaultColors" #js [(Color. color)])
+      (.addOrderRule x (fn [a b]
+                         (let [a (.getTime (.. format (parse (get (js->clj a) "date"))))
+                               b (.getTime (.. format (parse (get (js->clj b) "date"))))]
+                           (cond
+                             (> a b) 1
+                             (< a b) -1
+                             :else 0))))                         
       (.draw bar))))

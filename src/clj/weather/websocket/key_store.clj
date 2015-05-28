@@ -1,49 +1,19 @@
-(ns weather.websocket.redis
-  (:require [taoensso.timbre :as timbre]
-            [taoensso.carmine :as car :refer (wcar)]
-            [clj-time.format :as f]
+(ns weather.websocket.key-store
+  (:require [clj-time.format :as f]
             [clj-time.local :as l]
+            [cluster-map.core :as cmap :refer [with-connection]]
             [weather.utils.math :as math]))
-
-(timbre/refer-timbre)
 
 (def date-format (comp (partial f/unparse (f/formatter "yyyy-MM-dd"))
                        l/to-local-date-time))
 
-;(def redis-conn {:pool {} :spec {:host "192.168.0.108" :port 6379}})
-
-(defn make-transient [spec & {:keys [expire]}]
-  (reify
-    clojure.lang.ILookup
-    (valAt [this k]
-      (when-let [res (wcar spec (car/get k))]
-        res))
-    (valAt [this k default]
-      (or (.valAt this k) default))
-    clojure.lang.ITransientMap
-    (assoc [this k v]
-      (wcar spec (car/set k v))
-      (when expire
-        (wcar spec (car/expire k expire)))
-      this)
-    (without [this k]
-      (wcar spec (car/del k))
-      this)))
-
-(defn- exists?
-  [spec key]
-  (not (nil? (get spec key))))
-
-(defn keyname
-  [device]
+(defn keyname [device]
   (str (date-format (l/local-now)) ":" device))
 
-(defn- keyname-from-msg
-  [msg]
+(defn- keyname-from-msg [msg]
   (str (date-format (:date msg)) ":" (:deviceName msg)))
 
-(defn- create-key!
-  [spec key msg]
+(defn- create-key! [conn cluster db msg]
   (let [value {:date (:date msg)
                :current (:temperature msg)
                :total (:temperature msg)
@@ -51,12 +21,12 @@
                :high (:temperature msg)
                :low (:temperature msg)
                :type (:deviceName msg)}]
-    (assoc! spec key value)
+    (cmap/create-db conn db 129600)
+    (assoc! cluster :weather value)
     value))
 
-(defn- update-key!
-  [spec key msg]
-  (let [current-value (get spec key)
+(defn- update-key! [cluster msg]
+  (let [current-value (get cluster :weather)
         new-value {:date (:date msg)
                    :current (:temperature msg)
                    :total (math/round (+ (:total current-value) (:temperature msg)))
@@ -68,12 +38,13 @@
                           (:temperature msg)
                           (:low current-value))
                    :type (:deviceName msg)}]
-    (assoc! spec key new-value)
+    (assoc! cluster :weather new-value)
     new-value))
 
-(defn create-or-update
-  [spec msg]
-  (let [key (keyname-from-msg msg)]
-    (if (exists? spec key)
-      (update-key! spec key msg)
-      (create-key! spec key msg))))
+(defn create-or-update [store msg]
+  (let [db (keyname-from-msg msg)]
+    (with-connection [conn (cmap/connect store)
+                      cluster (cmap/cluster-map conn db)]
+      (if (cmap/exist? conn db)
+        (update-key! cluster msg)
+        (create-key! conn cluster db msg)))))

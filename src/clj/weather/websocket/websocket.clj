@@ -2,8 +2,9 @@
   (:require [clojure.core.async :refer [go-loop <!]]
             [clojure.core.match :refer [match]]
             [taoensso.timbre :as timbre]
-            [weather.websocket.redis :as redis]
-            [weather.utils.math :as math]))
+            [weather.websocket.key-store :as key-store]
+            [weather.utils.math :as math]
+            [cluster-map.core :as cmap :refer [with-connection]]))
 
 (timbre/refer-timbre)
 
@@ -28,16 +29,19 @@
           "Indoor" (chsk-send! client [:live-temp/indoor data])
           "Outdoor" (chsk-send! client [:live-temp/outdoor data]))))))
 
-(defn start-loop [ch spec f]
+(defn start-loop [ch store f]
   (go-loop []
     (let [msg (<! ch)
-          data (redis/create-or-update spec msg)]
+          data (key-store/create-or-update store msg)]
       (f data)
       (recur))))
 
-(defn make-event-handler [spec]
+(defn make-event-handler [store]
   (fn [{:keys [event ?reply-fn]}]
-    (match event
-           [:live-temp/init :indoor] (?reply-fn (get-aggregate (get spec (redis/keyname "Indoor"))))
-           [:live-temp/init :outdoor] (?reply-fn (get-aggregate (get spec (redis/keyname "Outdoor"))))
-           :else ())))
+    (with-connection [conn (cmap/connect store)
+                      indoor (cmap/cluster-map conn (key-store/keyname "Indoor"))
+                      outdoor (cmap/cluster-map conn (key-store/keyname "Outdoor"))]
+      (match event
+             [:live-temp/init :indoor] (?reply-fn (get-aggregate (get indoor :weather)))
+             [:live-temp/init :outdoor] (?reply-fn (get-aggregate (get outdoor :weather)))
+             :else ()))))

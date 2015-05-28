@@ -1,4 +1,4 @@
-(defproject weather "1.3.1"
+(defproject weather "1.4.0"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
@@ -6,6 +6,8 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :test-paths ["test/clj" "test/cljs"]
+
+  :clean-targets ^{:protect false} ["target" "resources/public/js"]
   
   :dependencies [[org.clojure/clojure "1.7.0-alpha4"]
                  [org.clojure/clojurescript "0.0-2505"]
@@ -25,10 +27,11 @@
                  [com.taoensso/carmine "2.7.1" :exclusions [com.taoensso/encore]]
                  [com.stuartsierra/component "0.2.2"]
                  [sablono "0.2.22"]
-                 [clj-time "0.8.0"]]
+                 [clj-time "0.8.0"]
+                 [cluster-map "0.1.3"]]
   
   :plugins [[lein-ring "0.8.12"]
-            [lein-cljsbuild "1.0.3"]
+            [lein-cljsbuild "1.0.6"]
             [cider/cider-nrepl "0.8.2"]]
 
   :main ^:skip-aot weather.core

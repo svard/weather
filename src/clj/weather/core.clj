@@ -14,19 +14,20 @@
    :mb-exchange "automation"
    :temp-routing-key "temps"
    :rain-routing-key "rain"
-   :redis-host "192.168.0.108"})
+   :key-store [{:host "192.168.0.108" :port 4040}
+               {:host "192.168.0.108" :port 4040}]})
 
 (defn get-system [conf]
   (component/system-map
      :db (db/new-mongo-db conf)
      :channels (mb/new-messagebus-channels)
-     :redis (ws/new-redis-store conf)
+     :store (ws/new-key-store conf)
      :mb (component/using
           (mb/new-messagebus conf)
           [:channels])
      :websocket (component/using
                  (ws/new-websocket)
-                 [:channels :redis])
+                 [:channels :store])
      :server (component/using
               (http/new-http-server conf)
               [:db :websocket])))
