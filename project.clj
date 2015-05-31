@@ -1,4 +1,4 @@
-(defproject weather "1.4.0"
+(defproject weather "1.4.1"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :min-lein-version "2.5.0"
@@ -7,7 +7,7 @@
 
   :test-paths ["test/clj" "test/cljs"]
 
-  :clean-targets ^{:protect false} ["target" "resources/public/js"]
+  :clean-targets ^{:protect false} ["target"]
   
   :dependencies [[org.clojure/clojure "1.7.0-alpha4"]
                  [org.clojure/clojurescript "0.0-2505"]
@@ -48,7 +48,7 @@
                                    :source-map true}}
                        {:id "prod"
                         :source-paths ["src/cljs"]
-                        :compiler {:output-to "resources/public/js/weather.js"
+                        :compiler {:output-to "resources/public/js/weather.min.js"
                                    :optimizations :advanced
                                    :preamble ["react/react.min.js"]
                                    :externs ["resources/public/bower_components/d3/d3.js"

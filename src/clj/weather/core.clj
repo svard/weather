@@ -15,7 +15,7 @@
    :temp-routing-key "temps"
    :rain-routing-key "rain"
    :key-store [{:host "192.168.0.108" :port 4040}
-               {:host "192.168.0.108" :port 4040}]})
+               {:host "192.168.0.187" :port 4040}]})
 
 (defn get-system [conf]
   (component/system-map

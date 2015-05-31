@@ -21,7 +21,7 @@
                :high (:temperature msg)
                :low (:temperature msg)
                :type (:deviceName msg)}]
-    (cmap/create-db conn db 129600)
+    (cmap/create-db conn db 129720)
     (assoc! cluster :weather value)
     value))
 
